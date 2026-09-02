@@ -1,0 +1,50 @@
+### IntelliJ IDEA ###
+.idea/
+*.iml
+out/
+javafx-out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.kotlin
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Game Saves ###
+/saves/
+manual-test-save.txt
+save.txt
+
+### Generated builds and local tooling ###
+build/
+dist/
+.codex-review-build/
+.agents/
+
+### Working versions of visual assets ###
+**/*-chromakey*.png
+**/*-uncropped.png
+**/*-before-*.png
+**/*-preview.png
