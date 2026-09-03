@@ -41,8 +41,49 @@ if ($LASTEXITCODE -ne 0) { throw "Java compilation failed." }
 
 Copy-Item -LiteralPath "javafx-src\arena\fx\fx-style.css" `
     -Destination (Join-Path $classesDir "arena\fx\fx-style.css")
-Copy-Item -LiteralPath "javafx-src\arena\fx\assets" `
-    -Destination (Join-Path $classesDir "arena\fx\assets") -Recurse
+
+# Package only assets used by the game. Source previews, chroma-key images,
+# uncropped originals, and edit backups stay in the project but not in releases.
+$runtimeAssets = @(
+    "avatars\players\player-murmillo.png",
+    "avatars\players\player-retiarius.png",
+    "avatars\players\player-dimachaerus.png",
+    "avatars\players\player-thraex.png",
+    "avatars\enemies\enemy-arena-recruit.png",
+    "avatars\enemies\enemy-nervous-shieldbearer.png",
+    "avatars\enemies\enemy-dust-runner.png",
+    "avatars\enemies\enemy-arena-brawler.png",
+    "avatars\enemies\enemy-desert-spearman.png",
+    "avatars\enemies\enemy-hookblade-duelist.png",
+    "avatars\enemies\enemy-iron-netter.png",
+    "avatars\enemies\enemy-the-hollow-helm.png",
+    "avatars\enemies\enemy-shield-bitten-veteran.png",
+    "avatars\rivals\rival-titus-the-butcher.png",
+    "avatars\rivals\rival-cassius-the-giant.png",
+    "avatars\rivals\rival-the-red-wolf.png",
+    "avatars\rivals\rival-viper-of-the-sands.png",
+    "avatars\champions\champion-aurelius-the-unbroken.png",
+    "backgrounds\arena-classic-day.png",
+    "backgrounds\ludus-training-yard.png",
+    "icons\app-icon.png",
+    "audio\effects\crowd-cheer.mp3",
+    "audio\effects\defeat.mp3",
+    "audio\effects\poison.mp3",
+    "audio\effects\victory.mp3",
+    "audio\effects\weapon-impact.mp3",
+    "audio\music\arena-epic-drums.mp3",
+    "audio\music\champion-great-arena.mp3",
+    "audio\music\ludus-dark-gladiator.mp3"
+)
+$assetSourceRoot = Join-Path $projectRoot "javafx-src\arena\fx\assets"
+$assetTargetRoot = Join-Path $classesDir "arena\fx\assets"
+foreach ($relativeAsset in $runtimeAssets) {
+    $sourceAsset = Join-Path $assetSourceRoot $relativeAsset
+    $targetAsset = Join-Path $assetTargetRoot $relativeAsset
+    if (-not (Test-Path $sourceAsset)) { throw "Runtime asset not found: $relativeAsset" }
+    New-Item -ItemType Directory -Force (Split-Path -Parent $targetAsset) | Out-Null
+    Copy-Item -LiteralPath $sourceAsset -Destination $targetAsset
+}
 
 & jar --create --file $appJar --main-class arena.fx.FxMain -C $classesDir .
 if ($LASTEXITCODE -ne 0) { throw "Application JAR creation failed." }
