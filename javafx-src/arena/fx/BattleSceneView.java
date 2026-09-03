@@ -53,6 +53,7 @@ class BattleSceneView {
     private final Label enemyStatusLabel;
     private final Label battleMessageLabel;
     private final Label roundLabel;
+    private final Label lastRoundLabel;
     private final Label rivalBannerLabel;
     private final VBox resultOverlay;
     private final Label resultTitleLabel;
@@ -181,6 +182,16 @@ class BattleSceneView {
         rivalBannerLabel.setTranslateX(-14);
         rivalBannerLabel.setTranslateY(10);
 
+        lastRoundLabel = new Label();
+        lastRoundLabel.getStyleClass().add("last-round-panel");
+        lastRoundLabel.setWrapText(true);
+        lastRoundLabel.setMaxWidth(430);
+        lastRoundLabel.setVisible(false);
+        lastRoundLabel.setManaged(false);
+        StackPane.setAlignment(lastRoundLabel, Pos.TOP_LEFT);
+        lastRoundLabel.setTranslateX(14);
+        lastRoundLabel.setTranslateY(10);
+
         resultTitleLabel = new Label("Victory");
         resultTitleLabel.getStyleClass().add("result-title");
         resultDetailLabel = new Label();
@@ -196,7 +207,7 @@ class BattleSceneView {
         StackPane.setAlignment(resultOverlay, Pos.CENTER);
 
         arenaScene.getChildren().add(battlePanel);
-        arenaScene.getChildren().addAll(roundLabel, rivalBannerLabel, battleMessageLabel);
+        arenaScene.getChildren().addAll(lastRoundLabel, roundLabel, rivalBannerLabel, battleMessageLabel);
         arenaScene.getChildren().add(resultOverlay);
         VBox.setVgrow(arenaScene, Priority.ALWAYS);
 
@@ -223,6 +234,8 @@ class BattleSceneView {
         rivalBannerLabel.setText(session.getRivalBannerText());
         battleMessageLabel.setVisible(activeBattle && !battleMessageLabel.getText().isEmpty());
         battleMessageLabel.setManaged(activeBattle && !battleMessageLabel.getText().isEmpty());
+        lastRoundLabel.setVisible(activeBattle && !lastRoundLabel.getText().isEmpty());
+        lastRoundLabel.setManaged(activeBattle && !lastRoundLabel.getText().isEmpty());
 
         if (session.hasPlayer()) {
             AvatarInfo avatar = avatarRegistry.playerAvatar(session.getPlayer().getGladiatorClass());
@@ -296,6 +309,14 @@ class BattleSceneView {
     void setEnemyBattleMessage(String message) {
         battleMessageLabel.setText(message == null ? "" : message.trim());
         updateBattleMessageStyle(message, true);
+    }
+
+    void setLastRound(String message) {
+        lastRoundLabel.setText(message == null ? "" : message.trim());
+    }
+
+    void clearLastRound() {
+        lastRoundLabel.setText("");
     }
 
     private void updateBattleMessageStyle(String message, boolean enemyAction) {

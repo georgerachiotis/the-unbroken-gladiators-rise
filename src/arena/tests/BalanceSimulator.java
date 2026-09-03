@@ -6,6 +6,7 @@ import arena.characters.Rival;
 import arena.enemies.ArenaRoster;
 import arena.enums.GladiatorClass;
 import arena.enums.InjuryType;
+import arena.enums.Difficulty;
 import arena.shop.Shop;
 
 import java.io.OutputStream;
@@ -24,37 +25,48 @@ public class BalanceSimulator {
     public static void main(String[] args) {
         int careers = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_CAREERS;
         long seed = args.length > 1 ? Long.parseLong(args[1]) : 1L;
+        Difficulty difficulty = args.length > 2
+                ? Difficulty.valueOf(args[2].toUpperCase()) : Difficulty.STANDARD;
 
-        Summary summary = runQuietly(careers, seed);
-        System.out.println(summary.describe());
+        Summary summary = runQuietly(careers, seed, difficulty);
+        System.out.println(difficulty.getDisplayName() + "\n" + summary.describe());
     }
 
     public static Summary runQuietly(int careers, long seed) {
+        return runQuietly(careers, seed, Difficulty.STANDARD);
+    }
+
+    public static Summary runQuietly(int careers, long seed, Difficulty difficulty) {
         PrintStream originalOut = System.out;
 
         try {
             System.setOut(new PrintStream(OutputStream.nullOutputStream()));
-            return run(careers, seed);
+            return run(careers, seed, difficulty);
         } finally {
             System.setOut(originalOut);
         }
     }
 
     public static Summary run(int careers, long seed) {
+        return run(careers, seed, Difficulty.STANDARD);
+    }
+
+    public static Summary run(int careers, long seed, Difficulty difficulty) {
         Summary summary = new Summary(careers);
         Random random = new Random(seed);
 
         for (int i = 0; i < careers; i++) {
-            CareerResult result = simulateCareer(new Random(random.nextLong()));
+            CareerResult result = simulateCareer(new Random(random.nextLong()), difficulty);
             summary.record(result);
         }
 
         return summary;
     }
 
-    private static CareerResult simulateCareer(Random random) {
+    private static CareerResult simulateCareer(Random random, Difficulty difficulty) {
         GladiatorClass[] classes = GladiatorClass.values();
         Player player = new Player("Sim", classes[random.nextInt(classes.length)]);
+        player.setDifficulty(difficulty);
         ArenaRoster roster = new ArenaRoster(random);
         Shop shop = new Shop();
         int day = 1;
@@ -62,11 +74,13 @@ public class BalanceSimulator {
         while (!player.isBrokenByLosses() && day <= MAX_DAYS) {
             if (player.getFame() >= 300) {
                 Enemy champion = roster.createChampion();
-                boolean victory = autoBattle(player, champion, random);
+                champion.applyDifficulty(difficulty);
+                boolean victory = autoBattle(player, champion, random, difficulty);
                 player.recordFightDay();
                 if (victory) {
                     player.addWin();
-                    player.gainReward(champion.getGoldReward(), adjustedFameReward(player, champion));
+                    player.gainReward(difficulty.adjustReward(champion.getGoldReward()),
+                            difficulty.adjustReward(adjustedFameReward(player, champion)));
                     return new CareerResult(player.getGladiatorClass(), true, false, day, player.getFame(), player.getWins(), player.getLosses());
                 }
 
@@ -105,12 +119,14 @@ public class BalanceSimulator {
                 player.recordNonFightDay();
             } else {
                 Enemy enemy = roster.createArenaOpponent(day, player, random.nextInt(100) < 15);
-                boolean victory = autoBattle(player, enemy, random);
+                enemy.applyDifficulty(difficulty);
+                boolean victory = autoBattle(player, enemy, random, difficulty);
                 player.recordFightDay();
 
                 if (victory) {
                     player.addWin();
-                    player.gainReward(enemy.getGoldReward(), adjustedFameReward(player, enemy));
+                    player.gainReward(difficulty.adjustReward(enemy.getGoldReward()),
+                            difficulty.adjustReward(adjustedFameReward(player, enemy)));
 
                     if (enemy instanceof Rival) {
                         roster.recordRivalDefeat((Rival) enemy);
@@ -194,7 +210,7 @@ public class BalanceSimulator {
         }
     }
 
-    private static boolean autoBattle(Player player, Enemy enemy, Random random) {
+    private static boolean autoBattle(Player player, Enemy enemy, Random random, Difficulty difficulty) {
         enemy.restore();
         int rounds = 0;
 
@@ -203,7 +219,7 @@ public class BalanceSimulator {
             boolean enemyTrapped = playerTurn(player, enemy, random);
 
             if (enemy.isAlive() && !enemyTrapped) {
-                enemyTurn(enemy, player, random);
+                enemyTurn(enemy, player, random, difficulty);
             }
         }
 
@@ -281,7 +297,7 @@ public class BalanceSimulator {
         }
     }
 
-    private static void enemyTurn(Enemy enemy, Player player, Random random) {
+    private static void enemyTurn(Enemy enemy, Player player, Random random, Difficulty difficulty) {
         boolean staggered = enemy.getStamina() * 4 <= enemy.getMaxStamina();
         if (staggered && random.nextInt(100) < 65) {
             enemy.recoverStamina(18);
@@ -290,7 +306,8 @@ public class BalanceSimulator {
 
         int playerDefense = player.getStamina() * 4 <= player.getMaxStamina()
                 ? player.getDefense() / 2 : player.getDefense();
-        int specialChance = enemy.getHp() * 4 <= enemy.getMaxHp() ? 40 : 25;
+        int specialChance = (enemy.getHp() * 4 <= enemy.getMaxHp() ? 40 : 25)
+                + difficulty.getEnemyAbilityChanceBonus();
         int damage;
 
         if (!staggered && enemy.hasStamina(12) && enemy.getAbility() != arena.enums.EnemyAbility.NONE
@@ -327,7 +344,7 @@ public class BalanceSimulator {
                     : Math.max(1, enemy.getStrength() - playerDefense + random.nextInt(5));
         }
 
-        player.takeDamage(damage);
+        player.takeDamage(difficulty.adjustIncomingDamage(damage));
     }
 
     private static void applySimulatedInjury(Player player, Random random) {

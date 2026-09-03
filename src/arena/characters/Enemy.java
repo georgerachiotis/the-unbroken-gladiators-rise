@@ -1,6 +1,7 @@
 package arena.characters;
 
 import arena.enums.EnemyAbility;
+import arena.enums.Difficulty;
 
 /**
  * Represents an opponent in the arena and the rewards granted when defeated.
@@ -10,6 +11,7 @@ public class Enemy extends Combatant {
     private int goldReward;
     private int fameReward;
     private EnemyAbility ability;
+    private boolean difficultyAdjusted;
 
     public Enemy(String name, int maxHp, int maxStamina, int strength, int defense,
                  int goldReward, int fameReward) {
@@ -41,6 +43,15 @@ public class Enemy extends Combatant {
 
     public EnemyAbility getAbility() {
         return ability;
+    }
+
+    public void applyDifficulty(Difficulty difficulty) {
+        if (difficultyAdjusted || difficulty == null) return;
+        maxHp = difficulty.adjustEnemyHp(maxHp);
+        hp = maxHp;
+        strength = difficulty.adjustEnemyStrength(strength);
+        defense = difficulty.adjustEnemyDefense(defense);
+        difficultyAdjusted = true;
     }
 
     public String getBattleStatus() {

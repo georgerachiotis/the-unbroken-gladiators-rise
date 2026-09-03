@@ -447,6 +447,7 @@ public class FxMain extends Application {
             if (session.isInBattle()) {
                 appendLog(roundSummary);
                 battleSceneView.setBattleMessage(roundSummary);
+                battleSceneView.setLastRound(lastRoundDisplay(logParts.playerText, "", roundSummary));
             }
             if (playerHpAfter < playerHpBefore) {
                 audioManager.playEffect(AudioManager.Effect.WEAPON_IMPACT);
@@ -462,6 +463,8 @@ public class FxMain extends Application {
             String enemyReport = logParts.enemyText + "\n" + roundSummary;
             appendLog(enemyReport);
             battleSceneView.setEnemyBattleMessage(roundSummary);
+            battleSceneView.setLastRound(lastRoundDisplay(
+                    logParts.playerText, logParts.enemyText, roundSummary));
             refresh();
             battleSceneView.playEnemyActionMotion(logParts.enemyText);
 
@@ -474,6 +477,16 @@ public class FxMain extends Application {
             syncScreenWithGameState();
         });
         enemyDelay.play();
+    }
+
+    private String lastRoundDisplay(String playerText, String enemyText, String roundSummary) {
+        StringBuilder display = new StringBuilder("LAST ROUND\nYou: ")
+                .append(conciseBattleMessage(playerText));
+        if (enemyText != null && !enemyText.isBlank()) {
+            display.append("\nEnemy: ").append(conciseBattleMessage(enemyText));
+        }
+        display.append("\n").append(roundSummary.replace("Round summary — ", ""));
+        return display.toString();
     }
 
     private void playBattleEffects(String message, int enemyHpBefore, int enemyHpAfter,
@@ -509,6 +522,9 @@ public class FxMain extends Application {
     }
 
     private void setScreen(ScreenState nextState) {
+        boolean enteringNewBattle = (nextState == ScreenState.PRE_FIGHT || nextState == ScreenState.BATTLE)
+                && screenState != ScreenState.PRE_FIGHT && screenState != ScreenState.BATTLE;
+        if (enteringNewBattle && battleSceneView != null) battleSceneView.clearLastRound();
         if (nextState != screenState) expandedView = false;
         screenState = nextState;
         applyScreenLayout();

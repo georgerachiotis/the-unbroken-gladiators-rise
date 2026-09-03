@@ -840,6 +840,7 @@ public class GameSession {
         pendingContract = createChampionMatch();
         pendingArenaEvent = ArenaEvent.NONE;
         pendingEnemy = arenaRoster.createChampion();
+        pendingEnemy.applyDifficulty(getDifficulty());
         pendingEnemy.restore();
         return "The Champion Match is ready.";
     }
@@ -896,6 +897,7 @@ public class GameSession {
         pendingContract = contract;
         pendingArenaEvent = rollArenaEvent();
         pendingEnemy = arenaRoster.createArenaOpponent(day, player, contract.isRivalChallenge());
+        pendingEnemy.applyDifficulty(getDifficulty());
         pendingEnemy.restore();
         return "Fight preview ready: " + pendingEnemy.getName() + ".";
     }
@@ -918,6 +920,7 @@ public class GameSession {
         if (isInBattle()) return "A fight is already underway.";
 
         Enemy enemy = arenaRoster.createArenaOpponent(day, player, contract.isRivalChallenge());
+        enemy.applyDifficulty(getDifficulty());
         return startArenaFight(contract, enemy, rollArenaEvent());
     }
 
@@ -926,6 +929,7 @@ public class GameSession {
         currentArenaEvent = event;
         currentArenaEvent.announce(player);
         currentEnemy = enemy;
+        currentEnemy.applyDifficulty(getDifficulty());
         currentEnemy.restore();
         lastBattleSummary = null;
         lastEnemySummary = describeEnemy(currentEnemy);
@@ -1339,7 +1343,8 @@ public class GameSession {
             return currentEnemy.getName() + " steps back and recovers 18 stamina.";
         }
 
-        int specialChance = currentEnemy.getHp() * 4 <= currentEnemy.getMaxHp() ? 40 : 25;
+        int specialChance = (currentEnemy.getHp() * 4 <= currentEnemy.getMaxHp() ? 40 : 25)
+                + getDifficulty().getEnemyAbilityChanceBonus();
         if (!isEnemyStaggered() && currentEnemy.hasStamina(12)
                 && currentEnemy.getAbility() != EnemyAbility.NONE && random.nextInt(100) < specialChance) {
             currentEnemy.useStamina(12);
@@ -1656,6 +1661,7 @@ public class GameSession {
         }
 
         currentEnemy = arenaRoster.createArenaOpponent(day, player, false);
+        currentEnemy.applyDifficulty(getDifficulty());
         currentContract = createLanistaOrder();
         currentArenaEvent = ArenaEvent.NONE;
         currentEnemy.restore();

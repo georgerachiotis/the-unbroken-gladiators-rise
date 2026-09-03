@@ -10,6 +10,6 @@ Expected PNG files:
 - `enemy-hookblade-duelist.png`
 - `enemy-iron-netter.png`
 - `enemy-the-hollow-helm.png`
+- `enemy-nervous-shieldbearer.png`
 
-`Nervous Shieldbearer` currently uses the procedural JavaFX fallback until a
-clean transparent PNG is approved.
+`Nervous Shieldbearer` uses its approved transparent comic-style sprite.

@@ -159,6 +159,20 @@ public class TestRunner {
                 "Story should increase rewards");
         require(Difficulty.MERCILESS.adjustReward(10) < 10,
                 "Merciless should reduce rewards");
+        Enemy standardEnemy = new Enemy("Standard", 100, 40, 20, 10, 10, 5,
+                EnemyAbility.SHIELD_BASH);
+        standardEnemy.applyDifficulty(Difficulty.STANDARD);
+        require(standardEnemy.getMaxHp() == 100 && standardEnemy.getStrength() == 20
+                        && standardEnemy.getDefense() == 10,
+                "Standard must not change enemy stats");
+        Enemy mercilessEnemy = new Enemy("Merciless", 100, 40, 20, 10, 10, 5,
+                EnemyAbility.SHIELD_BASH);
+        mercilessEnemy.applyDifficulty(Difficulty.MERCILESS);
+        require(mercilessEnemy.getMaxHp() == 108 && mercilessEnemy.getStrength() == 21
+                        && mercilessEnemy.getDefense() == 11,
+                "Merciless should strengthen enemy HP, strength, and defense");
+        require(Difficulty.MERCILESS.getEnemyAbilityChanceBonus() == 8,
+                "Merciless should make enemy abilities more frequent");
         passed++;
     }
 
